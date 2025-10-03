@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import glob
 import pandas as pd
 from typing import Tuple
 
@@ -26,9 +27,32 @@ def load_unclaimed_dataset(tsv_path: str) -> pd.DataFrame:
             break
 
     if resolved_path is None:
-        raise FileNotFoundError(
-            f"Dataset file not found. Tried: {candidate_paths}"
-        )
+        # Try to discover a likely TSV in common locations
+        search_roots = [
+            os.getcwd(),
+            os.path.join(os.getcwd(), "data"),
+        ]
+        candidates_glob = [
+            "*unclaimed*musical*work*right*shares*.tsv",
+            "*unclaimed*work*shares*.tsv",
+            "*.tsv",
+        ]
+        discovered = []
+        for root in search_roots:
+            for pat in candidates_glob:
+                discovered.extend(glob.glob(os.path.join(root, pat)))
+
+        if len(discovered) == 1 and os.path.isfile(discovered[0]):
+            resolved_path = discovered[0]
+        else:
+            raise FileNotFoundError(
+                "Dataset file not found. Tried: "
+                + str(candidate_paths)
+                + "; also searched: "
+                + ", ".join(search_roots)
+                + "; found: "
+                + str(discovered[:10])
+            )
 
     df = pd.read_csv(resolved_path, sep="\t", dtype=str, keep_default_na=False)
     # Normalize ISRC column names, keep all original columns
