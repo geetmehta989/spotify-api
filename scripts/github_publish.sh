@@ -6,12 +6,14 @@ set -euo pipefail
 # named tritone-task and push the current directory.
 
 REPO_NAME="tritone-task"
-REMOTE_URL=""
 
 if ! command -v gh >/dev/null 2>&1; then
   echo "ERROR: GitHub CLI (gh) not installed. Install from https://cli.github.com/" >&2
   exit 1
 fi
+
+USERNAME=$(gh api user --jq .login)
+TARGET_SSH_URL="git@github.com:${USERNAME}/${REPO_NAME}.git"
 
 # Ensure repository is initialized
 if [[ ! -d .git ]]; then
@@ -22,12 +24,20 @@ fi
 
 # Create GitHub repo if it doesn't exist; ignore error if already exists
 if ! gh repo view "$REPO_NAME" >/dev/null 2>&1; then
-  gh repo create "$REPO_NAME" --private --source=. --description "Tritone coding task: Spotify cross-reference with ISRCs" --push
+  gh repo create "$REPO_NAME" --private --description "Tritone coding task: Spotify cross-reference with ISRCs"
+  # Ensure origin points to the new repo
+  if git remote get-url origin >/dev/null 2>&1; then
+    git remote set-url origin "$TARGET_SSH_URL"
+  else
+    git remote add origin "$TARGET_SSH_URL"
+  fi
+  git push -u origin HEAD
 else
-  # Set remote if missing
-  if ! git remote get-url origin >/dev/null 2>&1; then
-    USERNAME=$(gh api user --jq .login)
-    git remote add origin "git@github.com:${USERNAME}/${REPO_NAME}.git"
+  # Ensure origin points to the target repo even if an origin exists
+  if git remote get-url origin >/dev/null 2>&1; then
+    git remote set-url origin "$TARGET_SSH_URL"
+  else
+    git remote add origin "$TARGET_SSH_URL"
   fi
   git add .
   git commit -m "Update: workflow and docs" || true
