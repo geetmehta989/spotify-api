@@ -67,8 +67,14 @@ gh auth login
 ```bash
 ./scripts/github_publish.sh
 ```
-PowerShell:
+PowerShell (recommended - token via env var):
 ```powershell
+# Set your PAT
+$env:GITHUB_TOKEN = 'YOUR_PAT_HERE'
+# Push project to existing repo (branch tritone-task)
+./scripts/push_tritone.ps1 -RepoPath "C:\spotify api" -Branch "tritone-task" -RemoteUrl "https://github.com/geetmehta989/spotify-api.git"
+
+# Install and run
 ./scripts/setup.ps1
 ./scripts/run.ps1 -Artist "Ed Sheeran" -Dataset "C:/spotify api/unclaimedmusicalworkrightshares.tsv" -Output "final_results.xlsx"
 ```
