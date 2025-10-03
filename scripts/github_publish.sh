@@ -46,4 +46,10 @@ fi
 
 git add .
 git commit -m "chore: add Tritone project files and automation" || true
-git push -u origin HEAD
+
+# Push with token header if provided and using HTTPS
+if [[ -n "${GITHUB_TOKEN:-}" ]] && git remote get-url origin | grep -qiE '^https?://'; then
+  git -c http.extraheader="AUTHORIZATION: bearer ${GITHUB_TOKEN}" push -u origin HEAD
+else
+  git push -u origin HEAD
+fi
