@@ -28,7 +28,7 @@ def load_settings() -> Settings:
 
     # Windows path in requirement (user provided). Allow override via DATASET_PATH.
     dataset_path = os.getenv(
-        "DATASET_PATH", os.path.expanduser("C:/data/unclaimedmusicalworkrightshares.tsv")
+        "DATASET_PATH", os.path.expanduser("C:/spotify api/unclaimedmusicalworkrightshares.tsv")
     )
 
     output_excel = os.getenv("OUTPUT_EXCEL", "final_results.xlsx")

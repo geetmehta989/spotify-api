@@ -1,11 +1,36 @@
 from __future__ import annotations
 
+import os
 import pandas as pd
 from typing import Tuple
 
 
 def load_unclaimed_dataset(tsv_path: str) -> pd.DataFrame:
-    df = pd.read_csv(tsv_path, sep="\t", dtype=str, keep_default_na=False)
+    # Resolve common Windows path issues (spaces, quoting)
+    candidate_paths = []
+    if tsv_path:
+        candidate_paths.append(tsv_path)
+        # If path contains backslashes, also try forward-slash version
+        candidate_paths.append(tsv_path.replace("\\", "/"))
+
+    # Fallback defaults commonly used in this project
+    candidate_paths.extend([
+        "C:/spotify api/unclaimedmusicalworkrightshares.tsv",
+        "C:/data/unclaimedmusicalworkrightshares.tsv",
+    ])
+
+    resolved_path = None
+    for p in candidate_paths:
+        if os.path.isfile(p):
+            resolved_path = p
+            break
+
+    if resolved_path is None:
+        raise FileNotFoundError(
+            f"Dataset file not found. Tried: {candidate_paths}"
+        )
+
+    df = pd.read_csv(resolved_path, sep="\t", dtype=str, keep_default_na=False)
     # Normalize ISRC column names, keep all original columns
     candidate_cols = [
         "ISRC", "isrc", "Isrc", "ISRC_code", "isrc_code", "ISRC Code",
