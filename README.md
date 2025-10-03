@@ -56,6 +56,7 @@ python -m src.main --artist "Ed Sheeran" --dataset "C:/data/unclaimedmusicalwork
 ### Notes on Dataset
 - Large datasets are not checked into git. Place your TSV at the path you set in `.env`.
 - The loader attempts to detect the ISRC column; it expects a column named like `ISRC`.
+- Example Windows path with spaces: `C:/spotify api/unclaimedmusicalworkrightshares.tsv`.
 
 ### GitHub Publishing
 - Ensure you have `gh` CLI installed and authenticated:
@@ -65,6 +66,11 @@ gh auth login
 - Publish to GitHub as a new repo named `tritone-task`:
 ```bash
 ./scripts/github_publish.sh
+```
+PowerShell:
+```powershell
+./scripts/setup.ps1
+./scripts/run.ps1 -Artist "Ed Sheeran" -Dataset "C:/spotify api/unclaimedmusicalworkrightshares.tsv" -Output "final_results.xlsx"
 ```
 
 ### Error Handling
