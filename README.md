@@ -57,6 +57,7 @@ python -m src.main --artist "Ed Sheeran" --dataset "C:/data/unclaimedmusicalwork
 - Large datasets are not checked into git. Place your TSV at the path you set in `.env`.
 - The loader attempts to detect the ISRC column; it expects a column named like `ISRC`.
 - Example Windows path with spaces: `C:/spotify api/unclaimedmusicalworkrightshares.tsv`.
+- You can also set `DATASET_PATH` to a public URL (e.g., Google Drive share link). The tool will download it automatically (requires `gdown`).
 
 ### GitHub Publishing
 - Ensure you have `gh` CLI installed and authenticated:
