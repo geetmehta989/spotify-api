@@ -1,19 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# This script assumes you have gh CLI authenticated (gh auth login)
-# and git is configured with your username/email. It will create a repo
-# named tritone-task and push the current directory.
+# Usage:
+#  - To push into an existing repo (no gh required):
+#      ./scripts/github_publish.sh <EXISTING_REPO_URL>
+#    Example:
+#      ./scripts/github_publish.sh git@github.com:geetmehta989/spotify-api.git
+#  - To create a new repo named tritone-task (gh required):
+#      ./scripts/github_publish.sh
 
 REPO_NAME="tritone-task"
+EXISTING_URL="${1:-}"
 
-if ! command -v gh >/dev/null 2>&1; then
-  echo "ERROR: GitHub CLI (gh) not installed. Install from https://cli.github.com/" >&2
-  exit 1
+if [[ -z "$EXISTING_URL" ]]; then
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "ERROR: GitHub CLI (gh) not installed. Install from https://cli.github.com/ or pass an existing repo URL as the first argument." >&2
+    exit 1
+  fi
+  USERNAME=$(gh api user --jq .login)
+  TARGET_URL="git@github.com:${USERNAME}/${REPO_NAME}.git"
+else
+  TARGET_URL="$EXISTING_URL"
 fi
-
-USERNAME=$(gh api user --jq .login)
-TARGET_SSH_URL="git@github.com:${USERNAME}/${REPO_NAME}.git"
 
 # Ensure repository is initialized
 if [[ ! -d .git ]]; then
@@ -23,23 +31,19 @@ if [[ ! -d .git ]]; then
 fi
 
 # Create GitHub repo if it doesn't exist; ignore error if already exists
-if ! gh repo view "$REPO_NAME" >/dev/null 2>&1; then
-  gh repo create "$REPO_NAME" --private --description "Tritone coding task: Spotify cross-reference with ISRCs"
-  # Ensure origin points to the new repo
-  if git remote get-url origin >/dev/null 2>&1; then
-    git remote set-url origin "$TARGET_SSH_URL"
-  else
-    git remote add origin "$TARGET_SSH_URL"
+if [[ -z "$EXISTING_URL" ]]; then
+  if ! gh repo view "$REPO_NAME" >/dev/null 2>&1; then
+    gh repo create "$REPO_NAME" --private --description "Tritone coding task: Spotify cross-reference with ISRCs"
   fi
-  git push -u origin HEAD
-else
-  # Ensure origin points to the target repo even if an origin exists
-  if git remote get-url origin >/dev/null 2>&1; then
-    git remote set-url origin "$TARGET_SSH_URL"
-  else
-    git remote add origin "$TARGET_SSH_URL"
-  fi
-  git add .
-  git commit -m "Update: workflow and docs" || true
-  git push -u origin HEAD
 fi
+
+# Ensure origin points to the target repo
+if git remote get-url origin >/dev/null 2>&1; then
+  git remote set-url origin "$TARGET_URL"
+else
+  git remote add origin "$TARGET_URL"
+fi
+
+git add .
+git commit -m "chore: add Tritone project files and automation" || true
+git push -u origin HEAD
