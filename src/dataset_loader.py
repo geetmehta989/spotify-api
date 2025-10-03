@@ -2,8 +2,53 @@ from __future__ import annotations
 
 import os
 import glob
+import tempfile
+import re
+from urllib.parse import urlparse
+
+try:
+    import gdown  # type: ignore
+except Exception:
+    gdown = None
 import pandas as pd
 from typing import Tuple
+
+
+def _maybe_download_from_url(source: str) -> str | None:
+    """If source looks like a URL, attempt to download and return local path."""
+    if not source:
+        return None
+    parsed = urlparse(source)
+    if not parsed.scheme or parsed.scheme.lower() not in {"http", "https"}:
+        return None
+
+    # Handle Google Drive URL id formats
+    drive_id = None
+    m = re.search(r"/d/([^/]+)/view", source)
+    if m:
+        drive_id = m.group(1)
+    elif "id=" in source:
+        drive_id = re.search(r"id=([A-Za-z0-9_-]+)", source).group(1) if re.search(r"id=([A-Za-z0-9_-]+)", source) else None
+
+    tmpdir = tempfile.mkdtemp(prefix="tritone_dl_")
+    out_path = os.path.join(tmpdir, "unclaimedmusicalworkrightshares.tsv")
+
+    if drive_id and gdown:
+        gdown.download(id=drive_id, output=out_path, quiet=True)
+        return out_path if os.path.isfile(out_path) else None
+
+    # Fallback: plain HTTP download via requests
+    try:
+        import requests
+        with requests.get(source, stream=True, timeout=60) as r:
+            r.raise_for_status()
+            with open(out_path, "wb") as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+        return out_path if os.path.isfile(out_path) else None
+    except Exception:
+        return None
 
 
 def load_unclaimed_dataset(tsv_path: str) -> pd.DataFrame:
@@ -21,6 +66,12 @@ def load_unclaimed_dataset(tsv_path: str) -> pd.DataFrame:
     ])
 
     resolved_path = None
+
+    # If tsv_path is a URL, try downloading
+    if resolved_path is None:
+        dl = _maybe_download_from_url(tsv_path)
+        if dl and os.path.isfile(dl):
+            resolved_path = dl
     for p in candidate_paths:
         if os.path.isfile(p):
             resolved_path = p
