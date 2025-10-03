@@ -48,6 +48,20 @@ pip install -r requirements.txt
 $env:PYTHONPATH=(Get-Location)
 python -m src.main --artist "Ed Sheeran" --dataset "C:/data/unclaimedmusicalworkrightshares.tsv" --output "final_results.xlsx"
 ```
+
+### Optional local API (localhost)
+- Start the API to generate the Excel via HTTP:
+```powershell
+./scripts/serve.ps1 -Host 127.0.0.1 -Port 8000
+```
+- Then POST to generate:
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/generate" -Method Post -ContentType 'application/json' -Body '{
+  "artist": "Ed Sheeran",
+  "dataset_path": "C:/spotify api/unclaimedmusicalworkrightshares.tsv",
+  "output_excel": "final_results.xlsx"
+}'
+```
 - Load the TSV dataset
 - Fetch the artist catalog
 - Cross-reference ISRCs
